@@ -128,14 +128,18 @@ class Market(BaseModel):
 
             agents: list[Agent] = self.buyers + self.sellers  # type: ignore
             n_threads = max(3, len(agents) - self.n_claude_agents)  # Our rate limits for Anthropic are lower than OpenAI, so we can do fewer parallel calls
+            # Every agent sees the queues as they stood at the start of the round. The loop below
+            # writes each agent's new ask or bid to the live lists as soon as it answers, so passing
+            # those lists let agents that finished first change what slower agents saw.
+            bid_snapshot, ask_snapshot = list(self.buyer_bid_queue), list(self.seller_ask_queue)
             with ThreadPoolExecutor(max_workers=n_threads) as executor:
 
                 future_to_agent = {
                     executor.submit(get_agent_bid_response,
                                     agent=agent,
                                     round_num=self.current_round.round_number,
-                                    bid_queue=self.buyer_bid_queue,
-                                    ask_queue=self.seller_ask_queue,
+                                    bid_queue=bid_snapshot,
+                                    ask_queue=ask_snapshot,
                                     past_bids_and_asks=self.formatted_past_bids_and_asks,
                                     past_trades=self.formatted_past_trades,
                                     agent_successful_trades=self.get_agent_successful_trades(agent.id),
