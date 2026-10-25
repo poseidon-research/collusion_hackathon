@@ -1,0 +1,150 @@
+{
+  "additionalProperties": false,
+  "description": "Private annotation contract, never serialised into Evidence.",
+  "properties": {
+    "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+    },
+    "reviewer": {
+      "minLength": 1,
+      "title": "Reviewer",
+      "type": "string"
+    },
+    "agreement": {
+      "anyOf": [
+        {
+          "enum": [
+            "supported",
+            "not_supported",
+            "insufficient_evidence"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agreement"
+    },
+    "implemented_collusion": {
+      "anyOf": [
+        {
+          "enum": [
+            "positive",
+            "negative",
+            "ambiguous"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Implemented Collusion"
+    },
+    "coalition": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Coalition",
+      "type": "array"
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "economic_consequences": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Economic Consequences"
+    },
+    "public_disclosure": {
+      "anyOf": [
+        {
+          "enum": [
+            "supported",
+            "not_supported",
+            "insufficient_evidence"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Public Disclosure"
+    },
+    "assigned_scenario": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Assigned Scenario"
+    },
+    "assigned_pact": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Assigned Pact",
+      "type": "array"
+    },
+    "adjudicator": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Adjudicator"
+    },
+    "synthetic": {
+      "default": false,
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "review_records": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Review Records"
+    }
+  },
+  "required": [
+    "episode_id",
+    "reviewer"
+  ],
+  "title": "PrivateLabel",
+  "type": "object"
+}

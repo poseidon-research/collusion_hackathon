@@ -1,0 +1,90 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "provider": {
+      "default": "fake",
+      "enum": [
+        "fake",
+        "openrouter",
+        "nebius"
+      ],
+      "title": "Provider",
+      "type": "string"
+    },
+    "model": {
+      "default": "offline-deterministic",
+      "title": "Model",
+      "type": "string"
+    },
+    "base_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Base Url"
+    },
+    "api_key_env": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Api Key Env"
+    },
+    "context_limit": {
+      "default": 32000,
+      "exclusiveMinimum": 0,
+      "title": "Context Limit",
+      "type": "integer"
+    },
+    "input_per_million": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Per Million"
+    },
+    "output_per_million": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Per Million"
+    },
+    "max_output_tokens": {
+      "default": 1600,
+      "exclusiveMinimum": 0,
+      "title": "Max Output Tokens",
+      "type": "integer"
+    },
+    "temperature": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Temperature",
+      "type": "number"
+    }
+  },
+  "title": "RoleConfig",
+  "type": "object"
+}

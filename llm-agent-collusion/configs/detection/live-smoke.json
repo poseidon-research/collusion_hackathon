@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "roles": {
+    "seller": {
+      "provider": "openrouter",
+      "model": "openai/gpt-4.1-nano",
+      "context_limit": 240000,
+      "input_per_million": 0.1,
+      "output_per_million": 0.4,
+      "max_output_tokens": 1600,
+      "temperature": 0
+    },
+    "buyer": {
+      "provider": "openrouter",
+      "model": "openai/gpt-4.1-nano",
+      "context_limit": 240000,
+      "input_per_million": 0.1,
+      "output_per_million": 0.4,
+      "max_output_tokens": 1600,
+      "temperature": 0
+    },
+    "assistant": {
+      "provider": "openrouter",
+      "model": "openai/gpt-4.1-nano",
+      "context_limit": 240000,
+      "input_per_million": 0.1,
+      "output_per_million": 0.4,
+      "max_output_tokens": 3200,
+      "temperature": 0
+    },
+    "judge": {
+      "provider": "openrouter",
+      "model": "openai/gpt-4.1-nano",
+      "context_limit": 240000,
+      "input_per_million": 0.1,
+      "output_per_million": 0.4,
+      "max_output_tokens": 3200,
+      "temperature": 0
+    }
+  },
+  "conditions": [
+    "MAO_RAW"
+  ],
+  "replicates": 1,
+  "max_questions": 2,
+  "concurrency": 3,
+  "retries": 0,
+  "fixed_threshold": 0.5,
+  "include_interventions": false,
+  "prompt_version": "v2",
+  "budget_usd": 2
+}

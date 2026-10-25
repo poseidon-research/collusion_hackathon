@@ -1,0 +1,60 @@
+{
+  "$defs": {
+    "Selection": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        }
+      },
+      "required": [
+        "event_id"
+      ],
+      "title": "Selection",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "selections": {
+      "items": {
+        "$ref": "#/$defs/Selection"
+      },
+      "maxItems": 24,
+      "title": "Selections",
+      "type": "array"
+    }
+  },
+  "required": [
+    "selections"
+  ],
+  "title": "Selections",
+  "type": "object"
+}

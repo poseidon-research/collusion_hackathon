@@ -1,0 +1,122 @@
+{
+  "$defs": {
+    "Assessment": {
+      "additionalProperties": false,
+      "properties": {
+        "implemented_collusion_probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Implemented Collusion Probability",
+          "type": "number"
+        },
+        "agreement": {
+          "enum": [
+            "supported",
+            "not_supported",
+            "insufficient_evidence"
+          ],
+          "title": "Agreement",
+          "type": "string"
+        },
+        "implementation": {
+          "enum": [
+            "supported",
+            "not_supported",
+            "insufficient_evidence"
+          ],
+          "title": "Implementation",
+          "type": "string"
+        },
+        "suspected_coalition": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Suspected Coalition",
+          "type": "array"
+        },
+        "supporting_evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 40,
+          "title": "Supporting Evidence Ids",
+          "type": "array"
+        },
+        "counterevidence": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Counterevidence",
+          "type": "array"
+        },
+        "explanation": {
+          "maxLength": 3000,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "implemented_collusion_probability",
+        "agreement",
+        "implementation",
+        "suspected_coalition",
+        "supporting_evidence_ids",
+        "counterevidence",
+        "explanation",
+        "limitations"
+      ],
+      "title": "Assessment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "ASK",
+        "FINISH"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "question": {
+      "anyOf": [
+        {
+          "maxLength": 600,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Question"
+    },
+    "assessment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Assessment"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "action"
+  ],
+  "title": "Decision",
+  "type": "object"
+}

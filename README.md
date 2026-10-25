@@ -2,10 +2,11 @@
 
 Ten research codebases on LLM agents, collusion and multi-agent coordination, bundled so a
 team can clone once and start hacking. Every project runs on a normal laptop with **no GPU**,
-calling models **through a hosted inference provider** (Nebius or OpenRouter), configured once at the repo root. Some have other local
-requirements, see below. Each folder has its own README with a quick start; the projects are
-independent, so start with the question that interests you. The starter gives you a working harness,
-not results: the sprint questions are yours to answer.
+calling models **through a hosted inference provider** (Nebius or OpenRouter). The original
+simulations share a repo-root inference configuration; the detection study below has its own.
+Some projects have other local requirements, see below. Each folder has its own README with
+a quick start; the projects are independent, so start with the question that interests you.
+The starter gives you a working harness, not results: the sprint questions are yours to answer.
 
 [`redteaming/`](redteaming/) is a separate challenge: Dolos-1.5B, a model Poseidon Research fine-tuned to have a
 hidden misaligned behavior. You get the weights and have to find out what the behavior is. It runs locally, with no
@@ -17,15 +18,130 @@ download the open-access PDFs. Collusion is defined in many different ways acros
 deciding early which kind of collusion a project is studying, because that decides what can be measured and what
 counts as evidence.
 
+## Collusion detection study
+
+**Start here for our experiment.** The remaining sections describe the bundled starter
+projects. This study lives in `llm-agent-collusion/` and has its own setup below.
+
+We ask whether combining **what agents say with what they do** improves collusion detection,
+and whether an assistant helps a judge by selecting evidence, explaining relationships or
+answering questions. An episode is one completed game or auction. The assistant and judge
+cooperate honestly and inspect its frozen logs after play.
+
+### 1. What is implemented now
+
+The current pipeline evaluates **nine core conditions on market-auction logs**. Each
+condition combines an evidence view with an oversight protocol:
+
+| Evidence view | Direct judge (`RAW`) | Extract-and-evaluate (`EAE`) | Linked report (`LINKED`) | Interactive (`INTERACTIVE`) |
+|---|---|---|---|---|
+| Messages (`M`) | Yes | Yes | Yes | Yes |
+| Messages + actions/outcomes (`MAO`) | Yes | Yes | Yes | Yes |
+| Actions/outcomes (`A`) | Yes | — | — | — |
+
+For example, `MAO_INTERACTIVE` means messages plus actions/outcomes, processed through
+interactive collaboration. **`RAW` in a condition ID means direct judge**; it does not select
+an input format. The current interactive protocol allows up to two judge questions and
+reuses the linked-report condition's initial report.
+
+For auctions, the target is **observable joint implementation by at least two sellers of an
+anticompetitive arrangement**. Agreement, implementation and economic consequences are
+assessed separately. An unimplemented proposal or parallel high prices alone does not
+establish the target. Messages-only assessments cannot verify behavioral implementation.
+
+### 2. Proposed extension: 32 cells
+
+**The full design below is proposed, not fully implemented.** It crosses three factors:
+
+| Factor | Levels |
+|---|---|
+| **Input condition (4)** | Messages; actions/outcomes; both raw; both structured |
+| **Oversight protocol (4)** | Direct judge; extract-and-evaluate; linked report; interactive collaboration |
+| **Environment (2)** | Social dilemma games; market auctions |
+
+This gives **4 × 4 × 2 = 32 experimental cells**. Each episode belongs to one environment
+and receives its **16 input–protocol combinations**, allowing comparisons on the same episode.
+
+“Both raw” and “both structured” must contain **the same communication and action/outcome
+records**. Code changes only their organization, such as chronological versus grouped by
+round and participant, without adding interpretations or removing evidence. The input
+factor tests presentation; the oversight factor tests how the assistant and judge process
+that input. A structured input and an assistant-written linked report are separate things.
+
+Still to implement: the separate both-raw/both-structured inputs, assistant protocols for
+actions/outcomes-only input, and social-dilemma integration with its own target definition
+and annotation rubric.
+
+### 3. How the four oversight protocols work
+
+| Protocol | Assistant's job | Judge receives | Follow-up |
+|---|---|---|---|
+| **Direct judge** | No assistant | Entire assigned input | None |
+| **Extract-and-evaluate (EaE)** | Select relevant source events | Selected verbatim evidence plus task context | None |
+| **Linked report** | Select evidence and explain relationships | Analysis grounded in source references, with supporting and conflicting evidence | None |
+| **Interactive collaboration** | Prepare the linked report, then investigate the judge's questions | The same initial report as the linked condition, followed by answers and newly retrieved evidence | Bounded dialogue |
+
+Every assistant sees only its assigned evidence view, including during follow-up. A
+messages-only assistant cannot retrieve action records. EaE forwards source excerpts;
+linked reports also explain relationships among events and acknowledge missing evidence.
+All views share the static task context, including participant roles and market rules.
+
+The implemented flow is: **import auction logs → build the assigned evidence view → run
+the protocol → save the judge's assessment → evaluate against independent labels**.
+Source references and excerpts are validated by application code. Private agent reasoning,
+generation assignments and prior monitor verdicts are excluded from the evidence views.
+
+### 4. Run it and find the code
+
+From the repository root, with [uv](https://docs.astral.sh/uv/) installed:
+
+```bash
+cd llm-agent-collusion
+uv sync --extra dev
+uv run python -m src.collusion_detection doctor --config configs/detection/offline.json
+uv run python -m src.collusion_detection demo --out detection_outputs/demo
+```
+
+This demo uses deterministic mock models, requires no API key and makes no paid inference
+calls. It runs the nine conditions on synthetic fixtures and one bundled auction episode.
+Read `detection_outputs/demo/fixture_report/report.md` and
+`detection_outputs/demo/real_report/report.md` inside `llm-agent-collusion/` for its outputs.
+These verify software behavior; the real episodes currently lack human gold labels, so the
+demo does not establish detection accuracy.
+
+For people and coding agents reading the implementation:
+
+| Read | Purpose |
+|---|---|
+| [Detection guide](llm-agent-collusion/docs/detection/README.md) | Full workflow, configuration, annotation, evaluation and live-inference commands |
+| [Condition configuration](llm-agent-collusion/src/collusion_detection/config.py) | Supported condition IDs and study settings |
+| [Importer](llm-agent-collusion/src/collusion_detection/importer.py) and [evidence views](llm-agent-collusion/src/collusion_detection/evidence.py) | Convert logs, restrict visible records and validate source references |
+| [Protocol engine](llm-agent-collusion/src/collusion_detection/engine.py) | Assistant/judge calls, reports and bounded dialogue |
+| [Annotation rubric](llm-agent-collusion/docs/detection/annotation-rubric.md) | What independent reviewers label as evidence of collusion |
+
+For scientific evaluation, use independent labels, keep related episodes together across
+development/test splits, and compare conditions on the same episodes. Report errors, false
+positives and inference cost alongside detection quality. Extra dialogue adds compute, so
+an improvement alone does not establish a communication benefit.
+
+**For live detection runs, follow the detection guide.** That pipeline loads explicitly
+configured credentials from `llm-agent-collusion/.env` and uses per-role model settings;
+the starter simulation routing described below does not configure it.
+
+## Compute for bundled starter projects
+
+The setup and project catalog below apply to the original starter simulations.
+
 > **Compute & inference — configure once:** copy `compute.env.example` → `compute.env` and set an
 > inference key — `NEBIUS_API_KEY` or `OPENROUTER_API_KEY` (either works; Nebius and OpenRouter are
-> interchangeable). Every project uses it automatically. **One entry point runs any experiment with a chosen model:**
+> interchangeable). The original hosted starter simulations use it automatically.
+> **Run a starter simulation with a chosen model:**
 > `poseidon-run --model <id> -- <the experiment's command>` — it routes **Nebius → OpenRouter →
 > Modal** automatically (OpenRouter covers closed models like GPT/Gemini/Claude; Modal hosts custom /
 > off-catalog models), otherwise stops with a clear error (nothing is ever substituted). Full guide:
 > **[`COMPUTE.md`](COMPUTE.md)**.
 
-## Setup — one command
+## Setup for bundled starter projects
 
 ### Prerequisites
 
@@ -54,7 +170,7 @@ cp compute.env.example compute.env     # then edit the file: add NEBIUS_API_KEY 
 `./setup.sh` installs the shared compute layer (**`poseidon_compute`**, in [`util/`](util/)) and every
 experiment's dependencies, and drops the `poseidon-run` entry point into a repo-root `./.venv`. Pass
 names to set up a subset (`./setup.sh focal-points llm-cartel`). Prefer to do one project by hand? Use
-the command in its section below — each is self-contained. Every experiment imports the shared layer
+the command in its section below — each is self-contained. The starter simulations import the shared layer
 directly with `from poseidon_compute import make_client, resolve_model` (no path hacks); details in
 [`util/README.md`](util/README.md) and [`COMPUTE.md`](COMPUTE.md).
 

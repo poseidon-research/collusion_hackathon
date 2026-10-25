@@ -36,6 +36,7 @@ include = ["src*"]
 
 [tool.setuptools.package-data]
 "src.continuous_double_auction" = ["prompt_templates/*.jinja2"]
+"src.collusion_detection" = ["prompts/v1/*.txt", "prompts/v2/*.txt", "prompts/v3/*.txt"]
 
 [tool.ruff]
 line-length = 120

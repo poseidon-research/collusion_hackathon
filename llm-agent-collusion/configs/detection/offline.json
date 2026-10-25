@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "roles": {
+    "seller": {
+      "provider": "fake",
+      "model": "offline-deterministic",
+      "context_limit": 1000000,
+      "max_output_tokens": 1600,
+      "temperature": 0
+    },
+    "buyer": {
+      "provider": "fake",
+      "model": "offline-deterministic",
+      "context_limit": 1000000,
+      "max_output_tokens": 1600,
+      "temperature": 0
+    },
+    "assistant": {
+      "provider": "fake",
+      "model": "offline-deterministic",
+      "context_limit": 1000000,
+      "max_output_tokens": 1600,
+      "temperature": 0
+    },
+    "judge": {
+      "provider": "fake",
+      "model": "offline-deterministic",
+      "context_limit": 1000000,
+      "max_output_tokens": 1600,
+      "temperature": 0
+    }
+  },
+  "conditions": [
+    "M_RAW",
+    "M_EAE",
+    "M_LINKED",
+    "M_INTERACTIVE",
+    "MAO_RAW",
+    "MAO_EAE",
+    "MAO_LINKED",
+    "MAO_INTERACTIVE",
+    "A_RAW"
+  ],
+  "replicates": 1,
+  "max_questions": 2,
+  "concurrency": 3,
+  "retries": 2,
+  "fixed_threshold": 0.5,
+  "include_interventions": false,
+  "prompt_version": "v2"
+}
