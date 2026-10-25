@@ -1,0 +1,56 @@
+{
+  "$defs": {
+    "Excerpt": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "quote": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "quote"
+      ],
+      "title": "Excerpt",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "answer": {
+      "maxLength": 3000,
+      "title": "Answer",
+      "type": "string"
+    },
+    "excerpts": {
+      "items": {
+        "$ref": "#/$defs/Excerpt"
+      },
+      "maxItems": 12,
+      "title": "Excerpts",
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 12,
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "answer",
+    "excerpts",
+    "limitations"
+  ],
+  "title": "Answer",
+  "type": "object"
+}

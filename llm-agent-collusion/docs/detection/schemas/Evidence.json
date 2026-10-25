@@ -1,0 +1,118 @@
+{
+  "$defs": {
+    "Event": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "round": {
+          "minimum": 1,
+          "title": "Round",
+          "type": "integer"
+        },
+        "event_type": {
+          "enum": [
+            "seller_message",
+            "ask_record",
+            "bid_record",
+            "trade",
+            "outcome"
+          ],
+          "title": "Event Type",
+          "type": "string"
+        },
+        "actor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Actor"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "source_ref": {
+          "title": "Source Ref",
+          "type": "string"
+        },
+        "available_round": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Available Round"
+        },
+        "observation": {
+          "enum": [
+            "message",
+            "recorded",
+            "missing_or_withdrawn",
+            "executed",
+            "derived"
+          ],
+          "title": "Observation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "round",
+        "event_type",
+        "text",
+        "source_ref",
+        "observation"
+      ],
+      "title": "Event",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+    },
+    "view": {
+      "enum": [
+        "M",
+        "MAO",
+        "A"
+      ],
+      "title": "View",
+      "type": "string"
+    },
+    "context": {
+      "additionalProperties": true,
+      "title": "Context",
+      "type": "object"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/Event"
+      },
+      "title": "Events",
+      "type": "array"
+    }
+  },
+  "required": [
+    "episode_id",
+    "view",
+    "context",
+    "events"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

@@ -1,0 +1,188 @@
+{
+  "$defs": {
+    "RoleConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "default": "fake",
+          "enum": [
+            "fake",
+            "openrouter",
+            "nebius"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "default": "offline-deterministic",
+          "title": "Model",
+          "type": "string"
+        },
+        "base_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Base Url"
+        },
+        "api_key_env": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Api Key Env"
+        },
+        "context_limit": {
+          "default": 32000,
+          "exclusiveMinimum": 0,
+          "title": "Context Limit",
+          "type": "integer"
+        },
+        "input_per_million": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Per Million"
+        },
+        "output_per_million": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Per Million"
+        },
+        "max_output_tokens": {
+          "default": 1600,
+          "exclusiveMinimum": 0,
+          "title": "Max Output Tokens",
+          "type": "integer"
+        },
+        "temperature": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Temperature",
+          "type": "number"
+        }
+      },
+      "title": "RoleConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "roles": {
+      "additionalProperties": {
+        "$ref": "#/$defs/RoleConfig"
+      },
+      "title": "Roles",
+      "type": "object"
+    },
+    "conditions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Conditions",
+      "type": "array"
+    },
+    "replicates": {
+      "default": 1,
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Replicates",
+      "type": "integer"
+    },
+    "max_questions": {
+      "default": 2,
+      "maximum": 2,
+      "minimum": 0,
+      "title": "Max Questions",
+      "type": "integer"
+    },
+    "concurrency": {
+      "default": 3,
+      "maximum": 3,
+      "minimum": 1,
+      "title": "Concurrency",
+      "type": "integer"
+    },
+    "retries": {
+      "default": 2,
+      "maximum": 5,
+      "minimum": 0,
+      "title": "Retries",
+      "type": "integer"
+    },
+    "budget_usd": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Budget Usd"
+    },
+    "fixed_threshold": {
+      "default": 0.5,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Fixed Threshold",
+      "type": "number"
+    },
+    "include_interventions": {
+      "default": false,
+      "title": "Include Interventions",
+      "type": "boolean"
+    },
+    "prompt_version": {
+      "default": "v2",
+      "enum": [
+        "v1",
+        "v2"
+      ],
+      "title": "Prompt Version",
+      "type": "string"
+    },
+    "manual_model_verification": {
+      "additionalProperties": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Manual Model Verification",
+      "type": "object"
+    }
+  },
+  "title": "StudyConfig",
+  "type": "object"
+}

@@ -1,0 +1,117 @@
+{
+  "$defs": {
+    "Excerpt": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "title": "Event Id",
+          "type": "string"
+        },
+        "quote": {
+          "maxLength": 6000,
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "quote"
+      ],
+      "title": "Excerpt",
+      "type": "object"
+    },
+    "Relationship": {
+      "additionalProperties": false,
+      "properties": {
+        "event_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Event Ids",
+          "type": "array"
+        },
+        "description": {
+          "maxLength": 1000,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_ids",
+        "description"
+      ],
+      "title": "Relationship",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate_arrangement": {
+      "maxLength": 1500,
+      "title": "Candidate Arrangement",
+      "type": "string"
+    },
+    "sellers": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Sellers",
+      "type": "array"
+    },
+    "support": {
+      "items": {
+        "$ref": "#/$defs/Excerpt"
+      },
+      "maxItems": 24,
+      "title": "Support",
+      "type": "array"
+    },
+    "relationships": {
+      "items": {
+        "$ref": "#/$defs/Relationship"
+      },
+      "maxItems": 24,
+      "title": "Relationships",
+      "type": "array"
+    },
+    "counterevidence": {
+      "items": {
+        "$ref": "#/$defs/Excerpt"
+      },
+      "maxItems": 16,
+      "title": "Counterevidence",
+      "type": "array"
+    },
+    "independent_explanations": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 12,
+      "title": "Independent Explanations",
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 12,
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "candidate_arrangement",
+    "sellers",
+    "support",
+    "relationships",
+    "counterevidence",
+    "independent_explanations",
+    "limitations"
+  ],
+  "title": "LinkedReport",
+  "type": "object"
+}

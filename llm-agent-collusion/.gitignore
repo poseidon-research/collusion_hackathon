@@ -194,3 +194,6 @@ pr-*.txt
 # Hackathon
 uv.lock.bak
 results/
+
+# Detection outputs include private provenance and provider transcripts.
+detection_outputs/

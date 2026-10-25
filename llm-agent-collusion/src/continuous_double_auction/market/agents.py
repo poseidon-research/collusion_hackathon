@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 import backoff
 import openai
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 from src.continuous_double_auction.cda_types import Agent, AgentBidResponse
@@ -229,6 +229,8 @@ class LMSeller(Agent):
     logger: Optional[ExperimentLogger] = None
     memory_manager: Optional[MemoryManager] = None
     scratch_pad: str = ""
+    # Optional generation-only objective. Public market serialization excludes it.
+    private_context: str = Field(default="", exclude=True)
 
     class Config:
         arbitrary_types_allowed = True
@@ -281,6 +283,8 @@ class LMSeller(Agent):
             oversight_enabled=self.expt_params.oversight_enabled,
             max_message_length=self.expt_params.max_message_length,
         )
+        if self.private_context:
+            prompt += "\n\nPrivate seller context:\n" + self.private_context
         messages = [Message(role="user", content=prompt)]
         response = self.client.generate(messages=messages)
         assert response is not None

@@ -1,5 +1,7 @@
 # Evaluating LLM Agent Collusion in Double Auctions
 
+**Collaborative detection extension:** see [docs/detection/README.md](docs/detection/README.md) for the nine-condition post-game pipeline, source-grounded assistants, interactive judge, independent labels, acceptance tests and explicit live gates. Start with `uv sync --extra dev`, then `uv run python -m src.collusion_detection demo`. Mocked results establish software behavior only.
+
 **Paper:** Agrawal, Teo, Vazquez, Kunnavakkam, Srikanth & Liu, *Evaluating LLM Agent Collusion in Double Auctions* ([arXiv:2507.01413](https://arxiv.org/abs/2507.01413))
 
 ## Overview
