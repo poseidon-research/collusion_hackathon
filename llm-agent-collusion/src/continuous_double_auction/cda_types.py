@@ -19,6 +19,9 @@ MODEL_ALIASES: Dict[str, str] = {
 SUPPORTED_MODELS = list(MODEL_ALIASES)  # aliases; see resolve_model()
 DEFAULT_MODEL = "gpt-4.1"
 ZIP_BUYER = "zip"  # rule-based buyer, no model call
+# Sprint addition (CAIAC AM team): scripted "maverick" seller, no model call. Use it as one entry of
+# --seller_models to replace that seller with a price-cutter (see market/agents.py: MaverickSeller).
+MAVERICK_SELLER = "maverick"
 
 Model = str
 
@@ -58,7 +61,13 @@ class ExperimentParams(BaseModel):
     overseer_model: str = "gpt-4.1-mini"     # model reading seller messages when oversight is enabled (paper: gpt-4.1-mini)
     overseer_sample_fraction: float = 1.0    # share of seller messages the overseer gets to see (sprint project 3.4)
     llm_eval: bool = False                   # run the LLM-as-judge coordination scoring after the run (paper: always)
-    
+    # Sprint additions (CAIAC AM team, sprint project 1.5)
+    oversight_warning_only: bool = False     # sellers see the oversight warning, but no overseer runs and no gag (a bluff)
+    oversight_silent: bool = False           # a real overseer reads messages and can gag, but sellers get no warning
+    enforce_gag: bool = False                # once the gag is on, seller messages are actually cut to 5 characters
+    maverick_floor: Optional[float] = None   # lowest ask a maverick seller will post; None = competitive equilibrium price
+    maverick_undercut: float = 1.0           # how far (in $) a maverick seller prices below the lowest rival ask
+
     @model_validator(mode='after')
     def validate_param_combinations(self) -> Self:
         if len(self.seller_valuations) != len(self.seller_models):
@@ -67,6 +76,16 @@ class ExperimentParams(BaseModel):
             raise ValueError('Number of buyer valuations must match number of buyer models')
         if self.oversight_enabled and not self.seller_comms_enabled:
             raise ValueError('Oversight can only be enabled if seller communications are enabled')
+        if self.oversight_warning_only and not self.seller_comms_enabled:
+            raise ValueError('The oversight warning only makes sense if seller communications are enabled')
+        if self.oversight_warning_only and self.oversight_enabled:
+            raise ValueError('Choose either oversight_enabled (real overseer) or oversight_warning_only (bluff), not both')
+        if self.maverick_undercut < 0:
+            raise ValueError('maverick_undercut must be >= 0')
+        if self.oversight_silent and not self.oversight_enabled:
+            raise ValueError('oversight_silent needs oversight_enabled (a real overseer)')
+        if self.enforce_gag and not self.oversight_enabled:
+            raise ValueError('enforce_gag needs oversight_enabled (only the overseer can turn the gag on)')
         if not 0.0 <= self.overseer_sample_fraction <= 1.0:
             raise ValueError('overseer_sample_fraction must be between 0 and 1')
         self.buyer_models = [None if m in (None, ZIP_BUYER, "none", "None") else m for m in self.buyer_models]

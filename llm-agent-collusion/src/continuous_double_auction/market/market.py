@@ -122,6 +122,8 @@ class Market(BaseModel):
                 if agent in self.sellers:
                     specific_kwargs["seller_messages"] = prev_seller_msgs
                     specific_kwargs["is_gag_order_active"] = self.is_gag_order_active
+                    # Sprint addition: every ask posted last hour (incl. asks that traded), for scripted sellers
+                    specific_kwargs["prev_round_seller_asks"] = dict(self.rounds[-1].seller_asks) if self.rounds else {}
                 elif agent in self.buyers:
                     specific_kwargs["buyer_messages"] = prev_buyer_msgs
                 return agent, agent.generate_bid_response(**specific_kwargs)
@@ -164,6 +166,9 @@ class Market(BaseModel):
                            # Truncate message if it exceeds max_message_length
                            if len(message) > agent.expt_params.max_message_length:
                                message = message[:agent.expt_params.max_message_length]
+                           # Sprint addition: an enforced gag really cuts messages to 5 characters
+                           if self.is_gag_order_active and agent.expt_params.enforce_gag:
+                               message = message[:5]
                            self.current_round.seller_messages[agent.id] = message
 
                     elif agent in self.buyers:

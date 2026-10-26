@@ -34,6 +34,7 @@ from tqdm import tqdm
 
 from src.continuous_double_auction.cda_types import (
     DEFAULT_MODEL,
+    MAVERICK_SELLER,
     MODEL_ALIASES,
     ZIP_BUYER,
     ExperimentParams,
@@ -45,7 +46,7 @@ from src.continuous_double_auction.identities import (
     get_random_buyer_company_names,
     get_random_seller_company_names,
 )
-from src.continuous_double_auction.market.agents import LMBuyer, LMSeller, MessageOverseer, ZIPBuyer
+from src.continuous_double_auction.market.agents import LMBuyer, LMSeller, MaverickSeller, MessageOverseer, ZIPBuyer
 from src.continuous_double_auction.market.market import Market
 from src.continuous_double_auction.util.logging_util import ExperimentLogger
 from src.continuous_double_auction.util.misc import get_client, initialize_market
@@ -113,22 +114,42 @@ def run_simulation(params: ExperimentParams, log_dir: Optional[str] = None, use_
                 )
             )
 
-    sellers = [
-        LMSeller(
-            id=f"Seller {seller_names[i]}",
-            company=seller_companies[i],
-            valuation=params.seller_valuations[i],
-            expt_params=params,
-            client=get_client(model=params.seller_models[i], **client_kwargs),
-            logger=logger,
-        )
-        for i in range(num_sellers)
-    ]
+    # Sprint addition: a maverick seller's floor defaults to the competitive equilibrium price
+    maverick_floor = params.maverick_floor
+    if maverick_floor is None:
+        maverick_floor = (float(np.mean(params.buyer_valuations)) + float(np.mean(params.seller_valuations))) / 2
+
+    sellers = []
+    for i in range(num_sellers):
+        if params.seller_models[i] == MAVERICK_SELLER:
+            sellers.append(
+                MaverickSeller(
+                    id=f"Seller {seller_names[i]}",
+                    company=seller_companies[i],
+                    valuation=params.seller_valuations[i],
+                    expt_params=params,
+                    floor=maverick_floor,
+                    undercut=params.maverick_undercut,
+                )
+            )
+        else:
+            sellers.append(
+                LMSeller(
+                    id=f"Seller {seller_names[i]}",
+                    company=seller_companies[i],
+                    valuation=params.seller_valuations[i],
+                    expt_params=params,
+                    client=get_client(model=params.seller_models[i], **client_kwargs),
+                    logger=logger,
+                )
+            )
 
     logger.metadata["buyer_ids"] = [buyer.id for buyer in buyers]
     logger.metadata["seller_ids"] = [seller.id for seller in sellers]
+    logger.metadata["maverick_seller_ids"] = [s.id for s in sellers if isinstance(s, MaverickSeller)]
+    logger.metadata["maverick_floor"] = maverick_floor if logger.metadata["maverick_seller_ids"] else None
     logger.metadata["resolved_models"] = {
-        "sellers": [effective_model(m) for m in params.seller_models],
+        "sellers": [m if m == MAVERICK_SELLER else effective_model(m) for m in params.seller_models],
         "buyers": [effective_model(m) if m else ZIP_BUYER for m in params.buyer_models],
         "overseer": effective_model(params.overseer_model) if params.oversight_enabled else None,
     }
@@ -284,7 +305,8 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         nargs="+",
         default=[DEFAULT_MODEL],
-        help=f"one for all sellers or one per seller. Aliases: {', '.join(MODEL_ALIASES)}",
+        help=f"one for all sellers or one per seller; '{MAVERICK_SELLER}' = scripted price-cutter (free). "
+        f"Aliases: {', '.join(MODEL_ALIASES)}",
     )
     m.add_argument(
         "--buyer_models",
@@ -313,6 +335,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="share of seller messages the overseer sees each round (try 0.25, 0.5, 1.0)",
     )
     a.add_argument("--boss_pressure", action="store_true", help="CEO message pressuring sellers to keep prices high")
+    # Sprint additions (CAIAC AM team)
+    a.add_argument(
+        "--oversight_warning_only",
+        action="store_true",
+        help="sellers see the oversight warning, but no overseer reads messages and nobody is gagged (a bluff)",
+    )
+    a.add_argument(
+        "--oversight_silent",
+        action="store_true",
+        help="with --oversight_enabled: the overseer reads messages and can gag, but sellers get no warning",
+    )
+    a.add_argument(
+        "--enforce_gag",
+        action="store_true",
+        help="with --oversight_enabled: once the gag is on, seller messages are really cut to 5 characters",
+    )
+    a.add_argument(
+        "--initial_ask_center",
+        type=float,
+        default=97.5,
+        help="center of the sellers' opening asks (paper: 97.5; 90 = start at the competitive price)",
+    )
+    a.add_argument(
+        "--maverick_floor",
+        type=float,
+        default=None,
+        help=f"lowest ask a '{MAVERICK_SELLER}' seller posts (default: competitive equilibrium price)",
+    )
+    a.add_argument(
+        "--maverick_undercut",
+        type=float,
+        default=1.0,
+        help=f"$ a '{MAVERICK_SELLER}' seller prices below the lowest rival ask (default 1.0)",
+    )
 
     o = p.add_argument_group("output")
     o.add_argument("--tag", type=str, default="", help="run name suffix")
@@ -337,17 +393,29 @@ def main() -> None:
     buyer_vals = broadcast(args.buyer_valuations, args.buyers, "buyer_valuations")
     if args.oversight_enabled and not args.seller_comms_enabled:
         sys.exit("❌ --oversight_enabled requires --seller_comms_enabled")
+    if args.oversight_warning_only and not args.seller_comms_enabled:
+        sys.exit("❌ --oversight_warning_only requires --seller_comms_enabled")
+    if args.oversight_warning_only and args.oversight_enabled:
+        sys.exit("❌ choose --oversight_enabled (real overseer) or --oversight_warning_only (bluff), not both")
+    if (args.oversight_silent or args.enforce_gag) and not args.oversight_enabled:
+        sys.exit("❌ --oversight_silent and --enforce_gag need --oversight_enabled")
 
     n_lm_buyers = sum(1 for b in buyer_models if b not in (ZIP_BUYER, "none", "None"))
-    calls_per_run = args.rounds * (args.sellers + n_lm_buyers)
+    n_lm_sellers = sum(1 for s in seller_models if s != MAVERICK_SELLER)
+    calls_per_run = args.rounds * (n_lm_sellers + n_lm_buyers)
     if args.oversight_enabled:
         calls_per_run += args.rounds
     if args.llm_eval:
         calls_per_run += args.rounds * args.sellers
     n_calls = calls_per_run * len(args.seeds)
-    models = sorted({effective_model(m) for m in seller_models + [b for b in buyer_models if b not in (ZIP_BUYER,)]})
+    models = sorted(
+        {
+            effective_model(m)
+            for m in [s for s in seller_models if s != MAVERICK_SELLER] + [b for b in buyer_models if b not in (ZIP_BUYER,)]
+        }
+    )
     print(
-        f"{len(args.seeds)} run(s) × {args.rounds} rounds × ({args.sellers} sellers + {n_lm_buyers} LLM buyers"
+        f"{len(args.seeds)} run(s) × {args.rounds} rounds × ({n_lm_sellers} LLM sellers + {n_lm_buyers} LLM buyers"
         f"{' + overseer' if args.oversight_enabled else ''}{' + judge' if args.llm_eval else ''}) "
         f"≈ {n_calls:,} model calls via OpenRouter.\n"
         "Rates: " + " · ".join(f"https://openrouter.ai/{m}" for m in models)
@@ -382,6 +450,12 @@ def main() -> None:
             overseer_model=args.overseer_model,
             overseer_sample_fraction=args.overseer_sample_fraction,
             llm_eval=args.llm_eval,
+            oversight_warning_only=args.oversight_warning_only,
+            oversight_silent=args.oversight_silent,
+            enforce_gag=args.enforce_gag,
+            initial_seller_ask_center=args.initial_ask_center,
+            maverick_floor=args.maverick_floor,
+            maverick_undercut=args.maverick_undercut,
         )
         try:
             run_simulation(params, log_dir=args.log_dir, use_wandb=args.wandb)
